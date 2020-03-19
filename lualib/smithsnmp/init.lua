@@ -58,6 +58,7 @@ local ASN1_TAG_CNT                   = 0x41
 local ASN1_TAG_GAU                   = 0x42
 local ASN1_TAG_TIMETICKS             = 0x43
 local ASN1_TAG_OPAQ                  = 0x44
+local ASN1_TAG_CNT64                 = 0x46
 local ASN1_TAG_NO_SUCH_OBJ           = 0x80
 local ASN1_TAG_NO_SUCH_INST          = 0x81
 
@@ -221,6 +222,17 @@ end
 function _M.Gauge(g, s)
     assert(type(g) == 'function' and type(s) == 'function', 'Arguments must be function type')
     return { tag = ASN1_TAG_GAU, access = MIB_ACES_RW, get_f = g, set_f = s }
+end
+
+-- Count64 get/set function.
+function _M.ConstCount64(g)
+    assert(type(g) == 'function', 'Argument must be function type')
+    return { tag = ASN1_TAG_CNT64, access = MIB_ACES_RO, get_f = g }
+end
+
+function _M.Count64(g, s)
+    assert(type(g) == 'function' and type(s) == 'function', 'Arguments must be function type')
+    return { tag = ASN1_TAG_CNT64, access = MIB_ACES_RW, get_f = g, set_f = s }
 end
 
 --
