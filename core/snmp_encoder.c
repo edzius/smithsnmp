@@ -173,10 +173,10 @@ ber_value_enc_try(const void *value, uint32_t len, uint8_t type)
 
   switch (type) {
     case ASN1_TAG_INT:
-    case ASN1_TAG_CNT:
       inter = (const int *)value;
       ret = ber_int_enc_try(*inter);
       break;
+    case ASN1_TAG_CNT:
     case ASN1_TAG_GAU:
     case ASN1_TAG_TIMETICKS:
       uinter = (const unsigned int *)value;
@@ -363,10 +363,10 @@ ber_value_enc(const void *value, uint32_t len, uint8_t type, uint8_t *buf)
 
   switch (type) {
     case ASN1_TAG_INT:
-    case ASN1_TAG_CNT:
       inter = (const int *)value;
       ret = ber_int_enc(*inter, buf);
       break;
+    case ASN1_TAG_CNT:
     case ASN1_TAG_GAU:
     case ASN1_TAG_TIMETICKS:
       uinter = (const unsigned int *)value;
