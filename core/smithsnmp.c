@@ -355,6 +355,10 @@ smithsnmp_trap_varbind(lua_State *L)
     length(&var) = 1;
     count(&var) = lua_tonumber(L, 3);
     break;
+  case ASN1_TAG_CNT64:
+    length(&var) = 1;
+    count64(&var) = lua_tonumber(L, 3);
+    break;
   case ASN1_TAG_IPADDR:
     length(&var) = lua_objlen(L, 3);
     for (i = 0; i < length(&var); i++) {

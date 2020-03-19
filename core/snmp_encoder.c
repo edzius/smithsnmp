@@ -91,19 +91,19 @@ ber_int_enc_try(int value)
  * Return: byte length.
  */
 static uint32_t
-ber_uint_enc_try(unsigned int value)
+ber_uint_enc_try(unsigned long long value)
 {
   uint32_t i, len;
   union anonymous {
-    uint8_t buf[sizeof(unsigned int)];
-    unsigned int tmp;
+    uint8_t buf[sizeof(unsigned long long)];
+    unsigned long long tmp;
   } a;
 
   a.tmp = value;
   len = 0;
 
 #ifdef LITTLE_ENDIAN
-  i = sizeof(unsigned int) - 1;
+  i = sizeof(unsigned long long) - 1;
 
   while (i > 0 && !a.buf[i]) {
     i--;
@@ -116,14 +116,14 @@ ber_uint_enc_try(unsigned int value)
 #else
   i = 0;
 
-  while (i < (sizeof(unsigned int) - 1) && !a.buf[i]) {
+  while (i < (sizeof(unsigned long long) - 1) && !a.buf[i]) {
     i++;
   }
   if (a.buf[i] & 0x80) {
     len += 1;
   }
 
-  len += sizeof(unsigned int) - i;
+  len += sizeof(unsigned long long) - i;
 #endif
 
   return len;
@@ -170,6 +170,7 @@ ber_value_enc_try(const void *value, uint32_t len, uint8_t type)
   const oid_t *oid;
   const int *inter;
   const unsigned int *uinter;
+  const unsigned long long *uinter64;
 
   switch (type) {
     case ASN1_TAG_INT:
@@ -181,6 +182,10 @@ ber_value_enc_try(const void *value, uint32_t len, uint8_t type)
     case ASN1_TAG_TIMETICKS:
       uinter = (const unsigned int *)value;
       ret = ber_uint_enc_try(*uinter);
+      break;
+    case ASN1_TAG_CNT64:
+      uinter64 = (const unsigned long long *)value;
+      ret = ber_uint_enc_try(*uinter64);
       break;
     case ASN1_TAG_OBJID:
       oid = (const oid_t *)value;
@@ -270,19 +275,19 @@ ber_int_enc(int value, uint8_t *buf)
  * Return: byte length.
  */
 static uint32_t
-ber_uint_enc(int value, uint8_t *buf)
+ber_uint_enc(unsigned long long value, uint8_t *buf)
 {
   int i, j;
   union anonymous {
-    uint8_t buf[sizeof(unsigned int)];
-    unsigned int tmp;
+    uint8_t buf[sizeof(unsigned long long)];
+    unsigned long long tmp;
   } a;
 
   a.tmp = value;
   j = 0;
 
 #ifdef LITTLE_ENDIAN
-  i = sizeof(unsigned int) - 1;
+  i = sizeof(unsigned long long) - 1;
 
   while (i > 0 && !a.buf[i]) {
     i--;
@@ -297,14 +302,14 @@ ber_uint_enc(int value, uint8_t *buf)
 #else
   i = 0;
 
-  while (i < (sizeof(unsigned int) - 1) && !a.buf[i]) {
+  while (i < (sizeof(unsigned long long) - 1) && !a.buf[i]) {
     i++;
   }
   if (a.buf[i] & 0x80) {
     buf[j++] = 0x0;
   }
 
-  while (i < sizeof(unsigned int)) {
+  while (i < sizeof(unsigned long long)) {
     buf[j++] = a.buf[i++];
   }
 #endif
@@ -360,6 +365,7 @@ ber_value_enc(const void *value, uint32_t len, uint8_t type, uint8_t *buf)
   const oid_t *oid;
   const int *inter;
   const unsigned int *uinter;
+  const unsigned long long *uinter64;
 
   switch (type) {
     case ASN1_TAG_INT:
@@ -371,6 +377,10 @@ ber_value_enc(const void *value, uint32_t len, uint8_t type, uint8_t *buf)
     case ASN1_TAG_TIMETICKS:
       uinter = (const unsigned int *)value;
       ret = ber_uint_enc(*uinter, buf);
+      break;
+    case ASN1_TAG_CNT64:
+      uinter64 = (const unsigned long long *)value;
+      ret = ber_uint_enc(*uinter64, buf);
       break;
     case ASN1_TAG_OBJID:
       oid = (const oid_t *)value;

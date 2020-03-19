@@ -144,6 +144,9 @@ mib_instance_search(struct oid_search_res *ret_oid)
     case ASN1_TAG_CNT:
       lua_pushnumber(L, count(var));
       break;
+    case ASN1_TAG_CNT64:
+      lua_pushnumber(L, count64(var));
+      break;
     case ASN1_TAG_IPADDR:
       lua_pushlstring(L, (char *)ipaddr(var), length(var));
       break;
@@ -198,6 +201,10 @@ mib_instance_search(struct oid_search_res *ret_oid)
         length(var) = 1;
         count(var) = lua_tonumber(L, -2);
         break;
+      case ASN1_TAG_CNT64:
+        length(var) = 1;
+        count64(var) = lua_tonumber(L, -2);
+	break;
       case ASN1_TAG_IPADDR:
         length(var) = lua_objlen(L, -2);
         for (i = 0; i < length(var); i++) {

@@ -69,7 +69,7 @@ typedef unsigned char ipaddr_t;
 typedef unsigned int oid_t;
 typedef unsigned int count_t;
 typedef unsigned int count32_t;
-typedef unsigned long count64_t;
+typedef unsigned long long count64_t;
 typedef unsigned int gauge_t;
 typedef unsigned int timeticks_t;
 

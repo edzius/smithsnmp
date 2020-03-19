@@ -58,6 +58,7 @@ ber_value_dec_try(const uint8_t *buf, uint32_t len, uint8_t type)
   switch (type) {
     case ASN1_TAG_INT:
     case ASN1_TAG_CNT:
+    case ASN1_TAG_CNT64:
     case ASN1_TAG_GAU:
     case ASN1_TAG_TIMETICKS:
       ret = 1;
@@ -172,6 +173,7 @@ ber_value_dec(const uint8_t *buf, uint32_t len, uint8_t type, void *value)
       ret = ber_int_dec(buf, len, value);
       break;
     case ASN1_TAG_CNT:
+    case ASN1_TAG_CNT64:
     case ASN1_TAG_GAU:
     case ASN1_TAG_TIMETICKS:
       ret = ber_uint_dec(buf, len, value);
