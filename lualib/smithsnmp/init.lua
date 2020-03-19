@@ -120,6 +120,21 @@ function _M.sh_call(command, rmode)
     return t
 end
 
+-- File content read.
+function _M.file_read(file, rmode)
+    if type(file) ~= 'string' or type(rmode) ~= 'string' then
+        return nil
+    end
+
+    local t = nil
+    local f = io.open(file, "r")
+    if f then
+        t = f:read(rmode)
+        f:close()
+    end
+    return t
+end
+
 -- Bit String get/set function.
 function _M.ConstBitString(g)
     assert(type(g) == 'function', 'Argument must be function type')
