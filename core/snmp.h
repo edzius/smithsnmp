@@ -197,6 +197,7 @@ struct snmp_datagram {
   uint32_t context_id_len;
   octstr_t context_name[41];
   uint32_t context_name_len;
+  struct mib_community *community;
   /* PDU */
   struct pdu_hdr pdu_hdr;
   /* varbind */

@@ -559,6 +559,11 @@ snmp_decode(struct snmp_datagram *sdg)
   ber_value_dec(buf, sdg->context_name_len, ASN1_TAG_OCTSTR, sdg->context_name);
   buf += sdg->context_name_len;
 
+  if (sdg->version < 3) {
+    /* Requested community resolution */
+    sdg->community = mib_community_search(sdg->context_name);
+  }
+
   /* PDU header */
   err = pdu_hdr_parse(sdg, &buf);
   if (err) {

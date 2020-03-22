@@ -26,39 +26,71 @@
 #include "mib.h"
 #include "snmp.h"
 
+#define ACC_CHECK_RD 0
+#define ACC_CHECK_WR 1
+
+static int
+mib_access_check(struct snmp_datagram *sdg, const oid_t *oid, uint32_t oid_len, int rw)
+{
+  struct mib_community *community = NULL;
+  struct mib_user *user = NULL;
+
+  if (sdg->version >= 3) {
+    user = sdg->user;
+    if (user == NULL) {
+      return SNMP_ERR_STAT_NO_ACCESS;
+    }
+    /* Read access */
+    if (!rw && !mib_user_view_cover(user, MIB_ACES_READ, oid, oid_len)) {
+      return SNMP_ERR_STAT_NO_ACCESS;
+    }
+    /* Write access */
+    if (rw && !mib_user_view_cover(user, MIB_ACES_WRITE, oid, oid_len)) {
+      return SNMP_ERR_STAT_NO_ACCESS;
+    }
+    /* Authentication */
+    if ((sdg->msg_flags & SNMP_SECUR_FLAG_AUTH) &&
+        (sdg->auth_err != SNMP_ERR_STAT_NO_ERR)) {
+      return sdg->auth_err;
+    }
+  } else {
+    community = sdg->community;
+    if (community == NULL) {
+      return SNMP_ERR_STAT_NO_ACCESS;
+    }
+    /* Read access */
+    if (!rw && !mib_community_view_cover(community, MIB_ACES_READ, oid, oid_len)) {
+      return SNMP_ERR_STAT_NO_ACCESS;
+    }
+    /* Write access */
+    if (rw && !mib_community_view_cover(community, MIB_ACES_WRITE, oid, oid_len)) {
+      return SNMP_ERR_STAT_NO_ACCESS;
+    }
+  }
+  return SNMP_ERR_STAT_NO_ERR;
+}
+
 static void
 mib_get(struct snmp_datagram *sdg, struct var_bind *vb_in, struct oid_search_res *ret_oid)
 {
   struct mib_view *view = NULL;
-  struct mib_community *community = NULL;
-  struct mib_user *user = NULL;
+  int ret;
 
-  /* Access control */
-  if (sdg->version >= 3) {
-    user = sdg->user;
-    if (user == NULL) {
-      ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-    }
-  } else {
-    community = mib_community_search(sdg->context_name);
-    if (community == NULL) {
-      ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-    }
-  }
-
-  /* Authentication */
-  if (user != NULL) {
-    if (sdg->msg_flags & SNMP_SECUR_FLAG_AUTH) {
-      ret_oid->err_stat = sdg->auth_err;
-    }
+  ret = mib_access_check(sdg, vb_in->oid, vb_in->oid_len, ACC_CHECK_RD);
+  if (ret != SNMP_ERR_STAT_NO_ERR) {
+    /* Duplicate original oid */
+    ret_oid->oid = oid_dup(vb_in->oid, vb_in->oid_len);
+    ret_oid->id_len = vb_in->oid_len;
+    ret_oid->err_stat = ret;
+    return;
   }
 
   /* Traverse all availble views according to community or user */
   for (; ;) {
     if (sdg->version >= 3) {
-      view = mib_user_next_view(user, MIB_ACES_READ, view);
+      view = mib_user_next_view(sdg->user, MIB_ACES_READ, view);
     } else {
-      view = mib_community_next_view(community, MIB_ACES_READ, view);
+      view = mib_community_next_view(sdg->community, MIB_ACES_READ, view);
     }
 
     /* End of mib view */
@@ -144,35 +176,23 @@ static void
 mib_getnext(struct snmp_datagram *sdg, struct var_bind *vb_in, struct oid_search_res *ret_oid)
 {
   struct mib_view *view = NULL;
-  struct mib_community *community = NULL;
-  struct mib_user *user = NULL;
+  int ret;
 
-  /* Access control */
-  if (sdg->version >= 3) {
-    user = sdg->user;
-    if (user == NULL) {
-      ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-    }
-  } else {
-    community = mib_community_search(sdg->context_name);
-    if (community == NULL) {
-      ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-    }
-  }
-
-  /* Authentication */
-  if (user != NULL) {
-    if (sdg->msg_flags & SNMP_SECUR_FLAG_AUTH) {
-      ret_oid->err_stat = sdg->auth_err;
-    }
+  ret = mib_access_check(sdg, vb_in->oid, vb_in->oid_len, ACC_CHECK_RD);
+  if (ret != SNMP_ERR_STAT_NO_ERR) {
+    /* Duplicate original oid */
+    ret_oid->oid = oid_dup(vb_in->oid, vb_in->oid_len);
+    ret_oid->id_len = vb_in->oid_len;
+    ret_oid->err_stat = ret;
+    return;
   }
 
   /* Traverse all availble views according to community or user */
   for (; ;) {
     if (sdg->version >= 3) {
-      view = mib_user_next_view(user, MIB_ACES_READ, view);
+      view = mib_user_next_view(sdg->user, MIB_ACES_READ, view);
     } else {
-      view = mib_community_next_view(community, MIB_ACES_READ, view);
+      view = mib_community_next_view(sdg->community, MIB_ACES_READ, view);
     }
 
     /* End of mib view */
@@ -258,47 +278,23 @@ static void
 mib_set(struct snmp_datagram *sdg, struct var_bind *vb_in, struct oid_search_res *ret_oid)
 {
   struct mib_view *view = NULL;
-  struct mib_community *community = NULL;
-  struct mib_user *user = NULL;
+  int ret;
 
-  /* Access control */
-  if (sdg->version >= 3) {
-    user = sdg->user;
-    if (user != NULL) {
-      /* Check mib write views */
-      if (!mib_user_view_cover(user, MIB_ACES_WRITE, vb_in->oid, vb_in->oid_len)) {
-        ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-        user = NULL;
-      }
-    } else {
-      ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-    }
-  } else {
-    community = mib_community_search(sdg->context_name);
-    if (community != NULL) {
-      /* Check mib write views */
-      if (!mib_community_view_cover(community, MIB_ACES_WRITE, vb_in->oid, vb_in->oid_len)) {
-        ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-        community = NULL;
-      }
-    } else {
-      ret_oid->err_stat = SNMP_ERR_STAT_NO_ACCESS;
-    }
-  }
-
-  /* Authentication */
-  if (user != NULL) {
-    if (sdg->msg_flags & SNMP_SECUR_FLAG_AUTH) {
-      ret_oid->err_stat = sdg->auth_err;
-    }
+  ret = mib_access_check(sdg, vb_in->oid, vb_in->oid_len, ACC_CHECK_WR);
+  if (ret != SNMP_ERR_STAT_NO_ERR) {
+    /* Duplicate original oid */
+    ret_oid->oid = oid_dup(vb_in->oid, vb_in->oid_len);
+    ret_oid->id_len = vb_in->oid_len;
+    ret_oid->err_stat = ret;
+    return;
   }
 
   /* Traverse all availble views according to community or user */
   for (; ;) {
     if (sdg->version >= 3) {
-      view = mib_user_next_view(user, MIB_ACES_WRITE, view);
+      view = mib_user_next_view(sdg->user, MIB_ACES_WRITE, view);
     } else {
-      view = mib_community_next_view(community, MIB_ACES_WRITE, view);
+      view = mib_community_next_view(sdg->community, MIB_ACES_WRITE, view);
     }
 
     /* End of mib view */
