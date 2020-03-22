@@ -288,6 +288,17 @@ smithsnmp_mib_user_unreg(lua_State *L)
   return 0;
 }
 
+/* Setup security mode from Lua */
+int
+smithsnmp_mib_security_mode(lua_State *L)
+{
+  /* Security mode type */
+  int mode = luaL_checkint(L, 1);
+  mib_security_set(mode);
+
+  return 0;
+}
+
 #ifndef DISABLE_TRAP
 /* Enable trap feature */
 int
@@ -445,6 +456,7 @@ static const luaL_Reg smithsnmp_func[] = {
   { "mib_user_create", smithsnmp_mib_user_create },
   { "mib_user_reg", smithsnmp_mib_user_reg },
   { "mib_user_unreg", smithsnmp_mib_user_unreg },
+  { "mib_security_mode", smithsnmp_mib_security_mode },
 #ifndef DISABLE_TRAP
   { "trap_open", smithsnmp_trap_open },
   { "trap_close", smithsnmp_trap_close },

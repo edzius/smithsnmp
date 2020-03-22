@@ -30,6 +30,7 @@
 static struct mib_view *mib_views;
 static struct mib_community *mib_communities;
 static struct mib_user *mib_users;
+static unsigned int mib_security;
 
 static struct mib_view *
 mib_view_search(const oid_t *oid, uint32_t id_len)
@@ -542,4 +543,31 @@ mib_user_next_view(struct mib_user *u, MIB_ACES_ATTR_E attribute, struct mib_vie
   }
 
   return NULL;
+}
+
+void
+mib_security_set(enum snmp_security_mode mode)
+{
+  mib_security = mode;
+}
+
+int
+mib_security_check(uint8_t req_flags)
+{
+  /* TODO: add security mode config for individual users. */
+  switch (mib_security) {
+  case SNMP_SECURITY_REQ_AUTH_REQ_PRIV:
+    /* SNMP requires authorization and encryption; request
+     * parameters should comply to be processed further. */
+    return !(req_flags & (SNMP_SECUR_FLAG_AUTH |
+                         SNMP_SECUR_FLAG_ENCRYPT));
+  case SNMP_SECURITY_REQ_AUTH:
+    /* SNMP requires authorization; request parameters should
+     * comply to be processed further. Encryption is optional. */
+    return !(req_flags & SNMP_SECUR_FLAG_AUTH);
+  case SNMP_SECURITY_NONE:
+  default:
+    /* No security requiremens for request -- allow it. */
+    return 0;
+  }
 }

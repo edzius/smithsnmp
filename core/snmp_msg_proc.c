@@ -48,6 +48,10 @@ mib_access_check(struct snmp_datagram *sdg, const oid_t *oid, uint32_t oid_len, 
     if (rw && !mib_user_view_cover(user, MIB_ACES_WRITE, oid, oid_len)) {
       return SNMP_ERR_STAT_NO_ACCESS;
     }
+    /* Authorization */
+    if (mib_security_check(sdg->msg_flags)) {
+      return SNMP_ERR_STAT_AUTHORIZATION;
+    }
     /* Authentication */
     if ((sdg->msg_flags & SNMP_SECUR_FLAG_AUTH) &&
         (sdg->auth_err != SNMP_ERR_STAT_NO_ERR)) {

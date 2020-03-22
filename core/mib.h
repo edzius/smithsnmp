@@ -36,6 +36,13 @@
 #define SHA1_KEY_LEN  20
 #define AES_KEY_LEN   16
 
+/* Access security mode */
+enum snmp_security_mode {
+  SNMP_SECURITY_NONE = 0,
+  SNMP_SECURITY_REQ_AUTH,
+  SNMP_SECURITY_REQ_AUTH_REQ_PRIV,
+};
+
 /* MIB access attribute */
 typedef enum mib_aces_attr {
   MIB_ACES_READ = 1,
@@ -147,6 +154,8 @@ void mib_community_unreg(const char *community, MIB_ACES_ATTR_E attribute);
 void mib_user_reg(const oid_t *oid, uint32_t len, const char *community, MIB_ACES_ATTR_E attribute);
 void mib_user_unreg(const char *user, MIB_ACES_ATTR_E attribute);
 void mib_user_create(const char *user, uint8_t auth_mode, const char *auth_phrase, uint8_t priv_mode, const char *priv_phrase);
+void mib_security_set(enum snmp_security_mode mode);
+int mib_security_check(uint8_t req_flags);
 struct mib_community *mib_community_search(const char *community);
 struct mib_view *mib_community_next_view(struct mib_community *c, MIB_ACES_ATTR_E attribute, struct mib_view *v);
 int mib_community_view_cover(struct mib_community *c, MIB_ACES_ATTR_E attribute, const oid_t *oid, uint32_t id_len);
