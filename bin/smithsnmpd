@@ -123,6 +123,14 @@ for oid_str, mib_module_name in pairs(mib_modules) do
         end
 end
 
+if mib_require_priv ~= nil then
+	snmpd.security_setup(snmpd.MIB_SEC_REQ_AUTH_REQ_PRIV)
+elseif mib_require_auth ~= nil then
+	snmpd.security_setup(snmpd.MIB_SEC_REQ_AUTH)
+else
+	snmpd.security_setup(snmpd.MIB_SEC_NONE)
+end
+
 if communities ~= nil then
         for _, t in ipairs(communities) do
                 if t.community ~= nil then

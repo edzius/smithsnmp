@@ -86,6 +86,11 @@ _M.SNMP_ERR_STAT_AUTHORIZATION       = 16
 _M.SNMP_ERR_STAT_NOT_WRITABLE        = 17
 _M.SNMP_ERR_STAT_INCONSISTENT_NAME   = 18
 
+-- Seucurty
+_M.MIB_SEC_NONE                      = 0
+_M.MIB_SEC_REQ_AUTH                  = 1
+_M.MIB_SEC_REQ_AUTH_REQ_PRIV         = 2
+
 --
 -- Generators for declare SNMP MIB Node
 --
@@ -896,6 +901,12 @@ end
 _M.user_create = function (user, auth_mode, auth_phrase, encrypt_mode, encrypt_phrase)
     assert(type(user) == 'string' and type(auth_phrase) == 'string' and type(encrypt_phrase) == 'string')
     core.mib_user_create(user, auth_mode, auth_phrase, encrypt_mode, encrypt_phrase)
+end
+
+-- security authorization mode
+_M.security_setup = function (security_mode)
+    assert(type(security_mode) == 'number')
+    core.mib_security_mode(security_mode)
 end
 
 -- register an mib group node
